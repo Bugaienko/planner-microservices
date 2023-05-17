@@ -1,5 +1,6 @@
 package ua.bugaienko.micro.planner.todo.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ua.bugaienko.micro.planner.entity.Task;
 import ua.bugaienko.micro.planner.todo.search.TaskSearchValues;
 import ua.bugaienko.micro.planner.todo.service.TaskService;
+import ua.bugaienko.micro.planner.utils.resttemplate.UserRestBuilder;
 
 import java.text.ParseException;
 import java.util.Calendar;
@@ -38,12 +40,15 @@ public class TaskController {
 
     public static final String ID_COLUMN = "id"; // имя столбца id
     private final TaskService taskService; // сервис для доступа к данным (напрямую к репозиториям не обращаемся)
+    private final UserRestBuilder userRestBuilder;
 
 
     // используем автоматическое внедрение экземпляра класса через конструктор
     // не используем @Autowired ля переменной класса, т.к. "Field injection is not recommended "
-    public TaskController(TaskService taskService) {
+    @Autowired
+    public TaskController(TaskService taskService, UserRestBuilder userRestBuilder) {
         this.taskService = taskService;
+        this.userRestBuilder = userRestBuilder;
     }
 
 
@@ -68,7 +73,11 @@ public class TaskController {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return ResponseEntity.ok(taskService.add(task)); // возвращаем созданный объект со сгенерированным id
+        if (userRestBuilder.isUserExists(task.getUserId())) {
+            return ResponseEntity.ok(taskService.add(task));
+        }
+
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST); // возвращаем созданный объект со сгенерированным id
 
     }
 
@@ -87,11 +96,12 @@ public class TaskController {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
         }
 
+        if (userRestBuilder.isUserExists(task.getUserId())) {
+            taskService.update(task);
+        }
 
-        // save работает как на добавление, так и на обновление
-        taskService.update(task);
 
-        return new ResponseEntity(HttpStatus.OK); // просто отправляем статус 200 (операция прошла успешно)
+        return new ResponseEntity("user with id= " + task.getUserId() + " doesn't exist", HttpStatus.OK); // просто отправляем статус 200 (операция прошла успешно)
 
     }
 

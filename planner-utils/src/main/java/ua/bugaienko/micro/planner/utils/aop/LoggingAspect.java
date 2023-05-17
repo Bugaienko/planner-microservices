@@ -1,4 +1,4 @@
-package ua.bugaienko.micro.planner.plannerutils.aop;
+package ua.bugaienko.micro.planner.utils.aop;
 
 import lombok.extern.java.Log;
 import org.aspectj.lang.ProceedingJoinPoint;

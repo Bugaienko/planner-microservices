@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ua.bugaienko.micro.planner.entity.Priority;
 import ua.bugaienko.micro.planner.todo.search.PrioritySearchValues;
 import ua.bugaienko.micro.planner.todo.service.PriorityService;
+import ua.bugaienko.micro.planner.utils.resttemplate.UserRestBuilder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -34,12 +35,14 @@ public class PriorityController {
 
     // доступ к данным из БД
     private final PriorityService priorityService;
+    private final UserRestBuilder userRestBuilder;
 
     // используем автоматическое внедрение экземпляра класса через конструктор
     // не используем @Autowired ля переменной класса, т.к. "Field injection is not recommended "
     @Autowired
-    public PriorityController(PriorityService priorityService) {
+    public PriorityController(PriorityService priorityService, UserRestBuilder userRestBuilder) {
         this.priorityService = priorityService;
+        this.userRestBuilder = userRestBuilder;
     }
 
 
@@ -68,8 +71,14 @@ public class PriorityController {
             return new ResponseEntity("missed param: color", HttpStatus.NOT_ACCEPTABLE);
         }
 
+        if (userRestBuilder.isUserExists(priority.getUserId())) {
+            return ResponseEntity.ok(priorityService.add(priority));
+        }
+
+        return new ResponseEntity("user with id= " + priority.getUserId() + " doesn't exist", HttpStatus.BAD_REQUEST);
+
         // save работает как на добавление, так и на обновление
-        return ResponseEntity.ok(priorityService.add(priority));
+//        return ResponseEntity.ok(priorityService.add(priority));
     }
 
 
@@ -92,8 +101,12 @@ public class PriorityController {
             return new ResponseEntity("missed param: color", HttpStatus.NOT_ACCEPTABLE);
         }
 
+        if (userRestBuilder.isUserExists(priority.getUserId())) {
+            return ResponseEntity.ok(priorityService.update(priority));
+        }
+
         // save работает как на добавление, так и на обновление
-        priorityService.update(priority);
+
 
 
         return new ResponseEntity(HttpStatus.OK); // просто отправляем статус 200 (операция прошла успешно)

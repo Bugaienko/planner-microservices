@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import ua.bugaienko.micro.planner.entity.Category;
 import ua.bugaienko.micro.planner.todo.search.CategorySearchValues;
 import ua.bugaienko.micro.planner.todo.service.CategoryService;
+import ua.bugaienko.micro.planner.utils.resttemplate.UserRestBuilder;
+import ua.bugaienko.micro.planner.utils.webclient.UserWebClientBuilder;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,12 +30,16 @@ public class CategoryController {
 
     // доступ к данным из БД
     private final CategoryService categoryService;
+    private final UserRestBuilder userRestBuilder;
+    private final UserWebClientBuilder userWebClientBuilder;
 
     // используем автоматическое внедрение экземпляра класса через конструктор
     // не используем @Autowired ля переменной класса, т.к. "Field injection is not recommended "
     @Autowired
-    public CategoryController(CategoryService categoryService) {
+    public CategoryController(CategoryService categoryService, UserRestBuilder userRestBuilder, UserWebClientBuilder userWebClientBuilder) {
         this.categoryService = categoryService;
+        this.userRestBuilder = userRestBuilder;
+        this.userWebClientBuilder = userWebClientBuilder;
     }
 
     @PostMapping("/all")
@@ -43,7 +49,7 @@ public class CategoryController {
 
 
     @PostMapping("/add")
-    public ResponseEntity<Category> add(@RequestBody Category category) {
+    public ResponseEntity add(@RequestBody Category category) {
 
         // проверка на обязательные параметры
         System.out.println("Catergory ADD do");
@@ -57,7 +63,18 @@ public class CategoryController {
             return new ResponseEntity("missed param: title MUST be not null", HttpStatus.NOT_ACCEPTABLE);
         }
 
-        return ResponseEntity.ok(categoryService.add(category)); // возвращаем добавленный объект с заполненным ID
+        if (userWebClientBuilder.isUserExists(category.getUserId())) {
+            return ResponseEntity.ok(categoryService.add(category));
+        }
+
+//        if (userRestBuilder.isUserExists(category.getUserId())) {
+//            return ResponseEntity.ok(categoryService.add(category));
+//        }
+
+        // if User doesn't exist
+        return new ResponseEntity("user id = " + category.getUserId() + " not found", HttpStatus.BAD_REQUEST);
+
+
     }
 
 
@@ -73,6 +90,10 @@ public class CategoryController {
         // если передали пустое значение title
         if (category.getTitle() == null || category.getTitle().trim().length() == 0) {
             return new ResponseEntity("missed param: title", HttpStatus.NOT_ACCEPTABLE);
+        }
+
+        if (userRestBuilder.isUserExists(category.getUserId())) {
+            return ResponseEntity.ok(categoryService.add(category));
         }
 
         // save работает как на добавление, так и на обновление
