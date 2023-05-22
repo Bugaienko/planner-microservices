@@ -29,7 +29,7 @@ dependencies {
 	implementation 'ua.bugaienko.micro.planner:planner-utils'
 
 
-	implementation 'org.postgresql:postgresql:42.3.8'
+	implementation 'org.postgresql:postgresql'
 
 
 

@@ -29,7 +29,7 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
 
-	implementation 'org.postgresql:postgresql:42.3.8'
+	implementation 'org.postgresql:postgresql'
 
 	implementation 'ua.bugaienko.micro.planner:planner-entity'
 	implementation 'ua.bugaienko.micro.planner:planner-utils'

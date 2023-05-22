@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ua.bugaienko.micro.planner.entity.User;
 import ua.bugaienko.micro.planner.users.search.UserSearchValues;
 import ua.bugaienko.micro.planner.users.service.UserService;
+import ua.bugaienko.micro.planner.utils.webclient.UserWebClientBuilder;
 
 import java.text.ParseException;
 import java.util.NoSuchElementException;
@@ -41,10 +42,12 @@ public class UserController {
 
     public static final String ID_COLUMN = "id"; // имя столбца id
     private final UserService userService; // сервис для доступа к данным (напрямую к репозиториям не обращаемся)
+    private final UserWebClientBuilder userWebClientBuilder;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserWebClientBuilder userWebClientBuilder) {
         this.userService = userService;
+        this.userWebClientBuilder = userWebClientBuilder;
     }
 //    private MessageProducer messageProducer; // утилита для отправки сообщений
 //
@@ -85,6 +88,13 @@ public class UserController {
 
         // добавляем пользователя
         user = userService.add(user);
+
+        if (user != null) {
+            userWebClientBuilder.initUserTestData(user.getId())
+                    .subscribe(result -> {
+                        System.out.println("user populated: " + result);
+                    });
+        }
 
 //        if (user != null) {
 //            // заполняем начальные данные пользователя (в параллелном потоке)
